@@ -1,0 +1,22 @@
+---
+- hosts: do-es-update-test
+  remote_user: root
+  become: yes
+  serial: 1
+  roles:
+    - { role: elasticsearch-wait-green, es_http_port: 9200 }
+    - role: elastic.elasticsearch
+  vars:
+    cluster_hosts: "{{ ansible_play_hosts | map('extract', hostvars, 'private_ipv4') | list }}"
+    es_enable_xpack: false
+    es_major_version: "5.x"
+    es_version: "5.6.0"
+    es_allow_downgrades: true
+    es_instance_name: "{{ node_name }}"
+    es_config:
+      cluster.name: "es-update-test"
+      discovery.zen.ping.unicast.hosts: "{{ cluster_hosts }}"
+      discovery.zen.minimum_master_nodes: "{{ cluster_hosts|length // 2 + 1 }}"
+      network.bind_host: "{{ private_ipv4 }},_global_,_local_"
+      network.host: '{{ private_ipv4 }}'
+
